@@ -146,11 +146,11 @@ var productions = map[tokenType]string{
 	//TokenBOM:            "\uFEFF",
 }
 
-// matchers maps the list of tokens to compiled regular expressions.
+// Matchers maps the list of tokens to compiled regular expressions.
 //
 // The map is filled on init() using the macros and productions defined in
 // the CSS specification.
-var matchers = map[tokenType]*regexp.Regexp{}
+var Matchers = map[tokenType]*regexp.Regexp{}
 
 // matchOrder is the order to test regexps when first-char shortcuts
 // can't be used.
@@ -174,7 +174,7 @@ func init() {
 		for macroRegexp.MatchString(s) {
 			s = macroRegexp.ReplaceAllStringFunc(s, replaceMacro)
 		}
-		matchers[t] = regexp.MustCompile("^(?:" + s + ")")
+		Matchers[t] = regexp.MustCompile("^(?:" + s + ")")
 	}
 }
 
@@ -226,7 +226,7 @@ func (s *Scanner) Next() *Token {
 	switch input[0] {
 	case '\t', '\n', '\f', '\r', ' ':
 		// Whitespace.
-		return s.emitToken(TokenS, matchers[TokenS].FindString(input))
+		return s.emitToken(TokenS, Matchers[TokenS].FindString(input))
 	case '.':
 		// Dot is too common to not have a quick check.
 		// We'll test if this is a Char; if it is followed by a number it is a
@@ -236,13 +236,13 @@ func (s *Scanner) Next() *Token {
 		}
 	case '#':
 		// Another common one: Hash or Char.
-		if match := matchers[TokenHash].FindString(input); match != "" {
+		if match := Matchers[TokenHash].FindString(input); match != "" {
 			return s.emitToken(TokenHash, match)
 		}
 		return s.emitSimple(TokenChar, "#")
 	case '@':
 		// Another common one: AtKeyword or Char.
-		if match := matchers[TokenAtKeyword].FindString(input); match != "" {
+		if match := Matchers[TokenAtKeyword].FindString(input); match != "" {
 			return s.emitSimple(TokenAtKeyword, match)
 		}
 		return s.emitSimple(TokenChar, "@")
@@ -251,7 +251,7 @@ func (s *Scanner) Next() *Token {
 		return s.emitSimple(TokenChar, string(input[0]))
 	case '"', '\'':
 		// String or error.
-		match := matchers[TokenString].FindString(input)
+		match := Matchers[TokenString].FindString(input)
 		if match != "" {
 			return s.emitToken(TokenString, match)
 		} else {
@@ -261,7 +261,7 @@ func (s *Scanner) Next() *Token {
 	case '/':
 		// Comment, error or Char.
 		if len(input) > 1 && input[1] == '*' {
-			match := matchers[TokenComment].FindString(input)
+			match := Matchers[TokenComment].FindString(input)
 			if match != "" {
 				return s.emitToken(TokenComment, match)
 			} else {
@@ -291,7 +291,7 @@ func (s *Scanner) Next() *Token {
 	}
 	// Test all regexps, in order.
 	for _, token := range matchOrder {
-		if match := matchers[token].FindString(input); match != "" {
+		if match := Matchers[token].FindString(input); match != "" {
 			return s.emitToken(token, match)
 		}
 	}
